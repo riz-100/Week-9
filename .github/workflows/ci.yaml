@@ -1,0 +1,19 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master # or the branch you want to deploy from
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: SSH and deploy
+
+        run: |
+          gcloud compute ssh --zone "us-central1-c" "instance-20250324-023954" --project "braided-visitor-454702-r1" "sudo bash ~/deploy.sh"
