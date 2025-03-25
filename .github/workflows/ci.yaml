@@ -1,22 +1,31 @@
-name: Deploy
+name: Deploy to GCE VM
 
 on:
   push:
     branches:
-      - master # or the branch you want to deploy from
+      - master # Change this to your deployment branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: SSH and deploy
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup SSH Key
         run: |
-          echo "$SSH_PRIVATE_KEY" > keyfile
-          chmod 600 keyfile
-          ssh -t -i keyfile rizwa@35.184.225.142 "sudo bash ~/deploy.sh"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/github-actions-key
+          chmod 600 ~/.ssh/github-actions-key
+          ssh-keyscan -H 35.184.225.142 >> ~/.ssh/known_hosts
+
+      - name: Deploy via SSH
+        run: |
+          ssh -i ~/.ssh/github-actions-key rizwa@35.184.225.142 << 'EOF'
+            cd ~/week-9
+            git pull origin master
+            npm install
+            npm run build
+            pm2 restart all
+          EOF
